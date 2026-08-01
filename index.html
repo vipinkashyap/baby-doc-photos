@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Baby Document Photo Kit</title>
 <style>
   :root{
@@ -16,29 +16,41 @@
     --card:#FFFFFF;
     --ok:#2E7D4F;
     --warn:#B3541E;
+    --tap:44px;                       /* min touch target */
+    --gutter:clamp(14px,4vw,20px);
   }
+  html{-webkit-text-size-adjust:100%}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:var(--paper);color:var(--ink);
     font-size:16px;line-height:1.5;
-    padding-bottom:60px;
+    padding-bottom:calc(48px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
   }
-  .wrap{max-width:560px;margin:0 auto;padding:0 16px}
+  .wrap{
+    max-width:560px;margin:0 auto;
+    padding-left:max(var(--gutter),env(safe-area-inset-left));
+    padding-right:max(var(--gutter),env(safe-area-inset-right));
+  }
+  :focus-visible{outline:3px solid var(--marigold-deep);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+  }
 
-  header{padding:28px 0 18px;border-bottom:2px solid var(--ink)}
+  header{padding:clamp(20px,6vw,28px) 0 18px;border-bottom:2px solid var(--ink)}
   .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700}
-  h1{font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.15;font-weight:700;margin-top:6px}
+  h1{font-family:Georgia,'Times New Roman',serif;font-size:clamp(26px,7.5vw,32px);line-height:1.15;font-weight:700;margin-top:6px}
   h1 .accent{color:var(--marigold-deep);font-style:italic}
-  header p{color:var(--ink-soft);font-size:14px;margin-top:8px}
+  header p{color:var(--ink-soft);font-size:14px;margin-top:8px;text-wrap:pretty}
 
-  section{margin-top:26px}
+  section{margin-top:clamp(20px,6vw,26px)}
   h2{font-family:Georgia,serif;font-size:20px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
   h2 .step{background:var(--ink);color:var(--paper);font-family:-apple-system,sans-serif;font-size:12px;font-weight:700;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 
   /* Reference cards */
   .doc-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px}
-  .doc-card .doc-name{font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .doc-card .doc-name{font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
   .badge{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
   .badge.photo{background:#FBEED3;color:var(--marigold-deep)}
   .badge.nophoto{background:#E5EFE9;color:var(--ok)}
@@ -48,15 +60,17 @@
   /* Capture */
   .btn-row{display:flex;gap:10px;flex-wrap:wrap}
   .btn{
-    appearance:none;border:none;cursor:pointer;
+    appearance:none;border:none;cursor:pointer;font-family:inherit;
     font-size:15px;font-weight:600;border-radius:10px;padding:13px 18px;
-    background:var(--ink);color:var(--paper);flex:1;min-width:130px;
+    background:var(--ink);color:var(--paper);
+    flex:1 1 140px;min-width:0;min-height:48px;
     transition:transform .08s ease;
+    touch-action:manipulation;
   }
   .btn:active{transform:scale(.97)}
   .btn.gold{background:var(--marigold);color:var(--ink)}
   .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
-  .btn.small{flex:0;padding:9px 14px;font-size:13px;min-width:0}
+  .btn.small{flex:0 0 auto;padding:11px 20px;font-size:14px;min-width:88px;min-height:var(--tap)}
   .btn:disabled{opacity:.4;cursor:default}
   input[type=file]{display:none}
 
@@ -66,17 +80,47 @@
   #stage{
     width:100%;aspect-ratio:1/1;background:#EDE7DA;
     border:2px solid var(--ink);border-radius:12px;
-    touch-action:none;display:block;
+    touch-action:none;display:block;margin-inline:auto;
   }
   .stage-tools{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
   .tool-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
   .tool-row:last-child{margin-bottom:0}
   .tool-row label{font-size:13px;font-weight:600;width:56px;flex-shrink:0}
-  input[type=range]{flex:1;accent-color:var(--marigold-deep)}
+
+  /* Landscape phones: canvas beside the controls, sized by height so both stay visible */
+  @media (orientation:landscape) and (max-height:560px){
+    .stage-holder.active{display:flex;gap:14px;align-items:flex-start}
+    #stage{flex:0 0 auto;width:calc(100dvh - 150px);max-width:55vw;margin-inline:0}
+    .stage-tools{margin-top:0;flex:1 1 0;min-width:0}
+    header{padding-top:14px}
+  }
+
+  /* Slider: default thumb is far too small to grab on a touchscreen */
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    flex:1;min-width:0;height:var(--tap);
+    background:transparent;accent-color:var(--marigold-deep);
+    touch-action:manipulation;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:28px;height:28px;margin-top:-11px;border-radius:50%;
+    background:var(--marigold-deep);border:3px solid var(--card);
+    box-shadow:0 1px 3px rgba(30,42,58,.35);
+  }
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+  input[type=range]::-moz-range-thumb{
+    width:28px;height:28px;border-radius:50%;
+    background:var(--marigold-deep);border:3px solid var(--card);
+  }
   .guide-toggle{display:flex;gap:8px;flex:1}
   .chip{
-    flex:1;text-align:center;font-size:12px;font-weight:600;padding:8px 4px;
-    border:1.5px solid var(--line);border-radius:8px;cursor:pointer;background:var(--card);color:var(--ink-soft)
+    appearance:none;font-family:inherit;line-height:1.25;
+    flex:1;min-width:0;text-align:center;font-size:12px;font-weight:600;padding:8px 4px;
+    min-height:var(--tap);display:flex;flex-direction:column;justify-content:center;gap:2px;
+    border:1.5px solid var(--line);border-radius:8px;cursor:pointer;background:var(--card);color:var(--ink-soft);
+    touch-action:manipulation;
   }
   .chip.on{border-color:var(--ink);background:var(--ink);color:var(--paper)}
   .hint{font-size:12.5px;color:var(--ink-soft);margin-top:10px;line-height:1.45}
@@ -85,6 +129,11 @@
   /* Downloads */
   .dl-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
   .dl-card .info{flex:1;min-width:0}
+  /* Narrow phones: stack so Save becomes a full-width target instead of a squeezed sliver */
+  @media (max-width:430px){
+    .dl-card{flex-direction:column;align-items:stretch;gap:12px}
+    .dl-card .btn.small{width:100%}
+  }
   .dl-card .t{font-weight:700;font-size:14.5px}
   .dl-card .s{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
   .dl-card .size-tag{font-size:11px;font-weight:700;color:var(--ok);margin-top:3px;display:none}
@@ -99,8 +148,8 @@
 
 <header>
   <div class="eyebrow">US-born · Indian parents</div>
-  <h1>Her first <span class="accent">official</span> photos</h1>
-  <p>One good picture of your daughter → correctly sized files for every application. Everything runs on your phone; nothing is uploaded anywhere.</p>
+  <h1>Baby's first <span class="accent">official</span> photos</h1>
+  <p>One good picture of your baby → correctly sized files for every application. Everything runs on your phone; nothing is uploaded anywhere.</p>
 </header>
 
 <section>
@@ -133,7 +182,7 @@
 </section>
 
 <section>
-  <h2><span class="step">2</span>Take or upload her photo</h2>
+  <h2><span class="step">2</span>Take or upload the photo</h2>
   <div class="btn-row">
     <button class="btn gold" onclick="document.getElementById('camIn').click()">📷 Take photo</button>
     <button class="btn ghost" onclick="document.getElementById('fileIn').click()">Upload from gallery</button>
@@ -150,14 +199,14 @@
       </div>
       <div class="tool-row">
         <label>Guide</label>
-        <div class="guide-toggle">
-          <div class="chip on" id="gUS" onclick="setGuide('us')">US Passport<br><small>head 50–69%</small></div>
-          <div class="chip" id="gIN" onclick="setGuide('in')">OCI / Visa<br><small>head 70–80%</small></div>
+        <div class="guide-toggle" role="group" aria-label="Crop guide">
+          <button type="button" class="chip on" id="gUS" aria-pressed="true" onclick="setGuide('us')">US Passport<small>head 50–69%</small></button>
+          <button type="button" class="chip" id="gIN" aria-pressed="false" onclick="setGuide('in')">OCI / Visa<small>head 70–80%</small></button>
         </div>
       </div>
       <div class="hint">
-        Drag to position · pinch or slider to zoom. Fit her head between the <b>orange lines</b> (crown to chin), face centered.<br><br>
-        <b>Baby tips:</b> lay her on a plain <b>white bedsheet</b>, shoot from directly above in daylight, no shadows, no hands/toys/pacifier in frame. Eyes ideally open; partially closed is OK under 1 year.
+        Drag to position · pinch or slider to zoom. Fit their head between the <b>orange lines</b> (crown to chin), face centered.<br><br>
+        <b>Baby tips:</b> lay them on a plain <b>white bedsheet</b>, shoot from directly above in daylight, no shadows, no hands/toys/pacifier in frame. Eyes ideally open; partially closed is OK under 1 year.
       </div>
     </div>
   </div>
@@ -253,13 +302,17 @@
       const z = document.getElementById('zoom');
       z.min = 100; z.max = 400; z.value = 100;
       draw();
-      stage.scrollIntoView({behavior:'smooth', block:'center'});
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      stage.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'center'});
       URL.revokeObjectURL(url); // image already decoded
     };
     im.src = url;
   }
-  document.getElementById('camIn').addEventListener('change', e=>loadFile(e.target.files[0]));
-  document.getElementById('fileIn').addEventListener('change', e=>loadFile(e.target.files[0]));
+  // Clearing the input lets you re-pick the same file (otherwise `change` never
+  // fires again on a retake, which is easy to hit on a phone).
+  function onPick(e){ loadFile(e.target.files[0]); e.target.value = ''; }
+  document.getElementById('camIn').addEventListener('change', onPick);
+  document.getElementById('fileIn').addEventListener('change', onPick);
 
   function clamp(){
     const w = img.width*scale, h = img.height*scale;
@@ -309,8 +362,9 @@
 
   window.setGuide = function(g){
     guide = g;
-    document.getElementById('gUS').classList.toggle('on', g==='us');
-    document.getElementById('gIN').classList.toggle('on', g==='in');
+    const us = document.getElementById('gUS'), inn = document.getElementById('gIN');
+    us.classList.toggle('on', g==='us');  us.setAttribute('aria-pressed', g==='us');
+    inn.classList.toggle('on', g==='in'); inn.setAttribute('aria-pressed', g==='in');
     draw();
   };
 
@@ -447,7 +501,23 @@
     }, 'image/jpeg', 0.95);
   };
 
-  window.addEventListener('resize', ()=>{ if(img){ sizeCanvas(); clamp(); draw(); } });
+  // Rotating a phone changes the stage size; rescale the crop proportionally
+  // so the framing the user set is preserved instead of jumping.
+  function handleResize(){
+    if(!img) return;
+    const prev = cssSize;
+    sizeCanvas();
+    if(prev && cssSize && prev !== cssSize){
+      const k = cssSize / prev;
+      scale *= k; ox *= k; oy *= k;
+      minScale = cssSize / Math.min(img.width, img.height);
+      scale = Math.max(minScale, Math.min(minScale*4, scale));
+      document.getElementById('zoom').value = Math.round(scale/minScale*100);
+    }
+    clamp(); draw();
+  }
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('orientationchange', ()=>setTimeout(handleResize, 250));
 })();
 </script>
 </body>
