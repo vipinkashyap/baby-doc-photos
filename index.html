@@ -141,6 +141,33 @@
   .checklist li{list-style:none;padding:5px 0 5px 26px;position:relative;color:var(--ink-soft)}
   .checklist li::before{content:"";position:absolute;left:2px;top:11px;width:14px;height:14px;border:2px solid var(--marigold-deep);border-radius:4px}
   footer{margin-top:32px;font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:14px;line-height:1.5}
+
+  /* Live readout for the crown/chin marking */
+  .fitline{margin-top:10px;font-size:12.5px;font-weight:600;line-height:1.4;padding:9px 12px;border-radius:8px}
+  .fitline.ok{background:#E9F2EC;color:var(--ok)}
+  .fitline.warn{background:#FBEEE3;color:var(--warn)}
+  .dl-card .rule{font-size:11.5px;color:var(--teal);font-weight:700;margin-top:3px}
+
+  /* Reference: read once, tapped never — so it starts collapsed */
+  .reference{background:var(--card);border:1px solid var(--line);border-radius:10px}
+  .reference summary{
+    cursor:pointer;list-style:none;padding:14px 16px;min-height:var(--tap);
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    font-family:Georgia,serif;font-size:17px;font-weight:700;
+  }
+  .reference summary::-webkit-details-marker{display:none}
+  .reference summary::after{content:"+";font-family:-apple-system,sans-serif;font-size:22px;line-height:1;color:var(--marigold-deep)}
+  .reference[open] summary{border-bottom:1px solid var(--line)}
+  .reference[open] summary::after{content:"–"}
+  .ref-body{padding:2px 16px}
+  /* flatten: no cards nested inside the card */
+  .ref-body .doc-card{border:none;border-radius:0;padding:14px 0;margin:0;border-bottom:1px solid var(--line)}
+  .ref-body .doc-card:last-child{border-bottom:none}
+  .ref-link{
+    display:inline-flex;align-items:center;gap:5px;min-height:var(--tap);
+    font-size:13px;font-weight:700;color:var(--teal);
+    text-decoration:underline;text-underline-offset:3px;
+  }
 </style>
 </head>
 <body>
@@ -153,61 +180,33 @@
 </header>
 
 <section>
-  <h2><span class="step">1</span>Where a photo is (and isn't) needed</h2>
-
-  <div class="doc-card">
-    <div class="doc-name">US Passport (Form DS-11) <span class="badge photo">Photo</span></div>
-    <div class="spec"><b>2×2 in printed</b> — bring 1 printed photo to the acceptance facility. White background. Baby's eyes may be partially closed (under 1 yr). Use the <b>4×6 print sheet</b> below at CVS/Walgreens (~35¢ vs $17 studio).</div>
-  </div>
-  <div class="doc-card">
-    <div class="doc-name">OCI Card <span class="badge photo">Photo</span></div>
-    <div class="spec"><b>51×51 mm square</b>, JPEG 200–900 px, <b>≤ 200 KB</b>, plain light background. Also needs baby's <b>left thumb impression</b> in the signature box (not a signature). 2 printed copies if applying via VFS.</div>
-  </div>
-  <div class="doc-card">
-    <div class="doc-name">India e-Visa <span class="badge photo">Photo</span></div>
-    <div class="spec"><b>Square JPEG</b>, 350–1000 px, <b>10–300 KB</b>, white/light background. Faster than OCI for a first India trip — you can do e-Visa now, OCI later.</div>
-  </div>
-  <div class="doc-card">
-    <div class="doc-name">Regular Indian Visa (VFS) <span class="badge photo">Photo</span></div>
-    <div class="spec">Same <b>2×2 in / 51×51 mm</b> square, digital upload <b>≤ 300 KB</b> + 2 printed copies. Only if not doing e-Visa/OCI.</div>
-  </div>
-  <div class="doc-card">
-    <div class="doc-name">Birth Certificate <span class="badge nophoto">No photo</span></div>
-    <div class="spec">Ordered from the county — no photo needed.</div>
-  </div>
-  <div class="doc-card">
-    <div class="doc-name">Social Security Number <span class="badge nophoto">No photo</span></div>
-    <div class="spec">Usually auto-applied at the hospital — no photo needed.</div>
-  </div>
-</section>
-
-<section>
-  <h2><span class="step">2</span>Take or upload the photo</h2>
+  <h2><span class="step">1</span>Take or upload the photo</h2>
   <div class="btn-row">
     <button class="btn gold" onclick="document.getElementById('camIn').click()">📷 Take photo</button>
     <button class="btn ghost" onclick="document.getElementById('fileIn').click()">Upload from gallery</button>
   </div>
   <input type="file" id="camIn" accept="image/*" capture="environment">
   <input type="file" id="fileIn" accept="image/*">
+  <div class="hint">
+    <b>Baby tips:</b> lay them on a plain <b>white bedsheet</b>, shoot from directly above in daylight, no shadows, no hands/toys/pacifier in frame. Eyes ideally open; partially closed is OK under 1 year.
+  </div>
+</section>
+
+<section id="cropSection" style="display:none">
+  <h2><span class="step">2</span>Mark the crown and chin</h2>
 
   <div class="stage-holder" id="stageHolder">
     <canvas id="stage"></canvas>
     <div class="stage-tools">
       <div class="tool-row">
-        <label>Zoom</label>
+        <label for="zoom">Zoom</label>
         <input type="range" id="zoom" min="100" max="400" value="100">
       </div>
-      <div class="tool-row">
-        <label>Guide</label>
-        <div class="guide-toggle" role="group" aria-label="Crop guide">
-          <button type="button" class="chip on" id="gUS" aria-pressed="true" onclick="setGuide('us')">US Passport<small>head 50–69%</small></button>
-          <button type="button" class="chip" id="gIN" aria-pressed="false" onclick="setGuide('in')">OCI / Visa<small>head 70–80%</small></button>
-        </div>
-      </div>
       <div class="hint">
-        Drag to position · pinch or slider to zoom. Fit their head between the <b>orange lines</b> (crown to chin), face centered.<br><br>
-        <b>Baby tips:</b> lay them on a plain <b>white bedsheet</b>, shoot from directly above in daylight, no shadows, no hands/toys/pacifier in frame. Eyes ideally open; partially closed is OK under 1 year.
+        Drag the <b>two orange lines</b> onto the top of the head and the bottom of the chin. Drag the photo itself to centre the face; pinch or use the slider to zoom.<br><br>
+        You only do this once — each file below is then cropped to <b>its own official head-size rule</b> automatically.
       </div>
+      <div class="fitline" id="fitline"></div>
     </div>
   </div>
 </section>
@@ -219,6 +218,7 @@
     <div class="info">
       <div class="t">US Passport — print sheet</div>
       <div class="s">4×6 in @ 300 dpi with four 2×2 photos + cut marks. Print as a normal 4×6 photo, cut with scissors.</div>
+      <div class="rule">Head sized to the US rule (50–69%)</div>
       <div class="size-tag" id="sz-print"></div>
     </div>
     <button class="btn small" onclick="exportPrintSheet()">Save</button>
@@ -228,27 +228,30 @@
     <div class="info">
       <div class="t">US Passport — digital 600×600</div>
       <div class="s">For any online US form asking for a 2×2 digital photo.</div>
+      <div class="rule">Head sized to the US rule (50–69%)</div>
       <div class="size-tag" id="sz-us"></div>
     </div>
-    <button class="btn small" onclick="exportSquare('us-passport-600', 600, 10000, 'sz-us')">Save</button>
+    <button class="btn small" onclick="exportSquare('us-passport-600', 600, 10000, 'sz-us', 'us')">Save</button>
   </div>
 
   <div class="dl-card">
     <div class="info">
       <div class="t">OCI upload — 900×900, ≤200 KB</div>
       <div class="s">JPEG sized for ociservices.gov.in (200–900 px, max 200 KB).</div>
+      <div class="rule">Head sized to the Indian rule (70–80%)</div>
       <div class="size-tag" id="sz-oci"></div>
     </div>
-    <button class="btn small" onclick="exportSquare('oci-900', 900, 200, 'sz-oci')">Save</button>
+    <button class="btn small" onclick="exportSquare('oci-900', 900, 200, 'sz-oci', 'in')">Save</button>
   </div>
 
   <div class="dl-card">
     <div class="info">
       <div class="t">India e-Visa — 1000×1000, ≤300 KB</div>
       <div class="s">JPEG for indianvisaonline.gov.in (350–1000 px, 10–300 KB). Also works for VFS regular-visa uploads.</div>
+      <div class="rule">Head sized to the Indian rule (70–80%)</div>
       <div class="size-tag" id="sz-ev"></div>
     </div>
-    <button class="btn small" onclick="exportSquare('india-evisa-1000', 1000, 300, 'sz-ev')">Save</button>
+    <button class="btn small" onclick="exportSquare('india-evisa-1000', 1000, 300, 'sz-ev', 'in')">Save</button>
   </div>
 
   <div style="margin-top:18px">
@@ -261,6 +264,51 @@
       <li>OCI: don't reuse an Indian-passport-style 35×45 rectangle — it must be this square</li>
     </ul>
   </div>
+</section>
+
+<section>
+  <details class="reference">
+    <summary>Which documents need a photo?</summary>
+    <div class="ref-body">
+
+      <div class="doc-card">
+        <div class="doc-name">US Passport (Form DS-11) <span class="badge photo">Photo</span></div>
+        <div class="spec"><b>2×2 in printed</b> — bring 1 printed photo to the acceptance facility. White background. Baby's eyes may be partially closed (under 1 yr). Use the <b>4×6 print sheet</b> above at CVS/Walgreens (~35¢ vs $17 studio).</div>
+        <a class="ref-link" href="https://travel.state.gov/content/travel/en/passports/how-apply/photos.html" target="_blank" rel="noopener noreferrer">State Dept photo requirements ↗</a>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-name">OCI Card <span class="badge photo">Photo</span></div>
+        <div class="spec"><b>51×51 mm square</b>, JPEG 200–900 px, <b>≤ 200 KB</b>, plain light background. Also needs baby's <b>left thumb impression</b> in the signature box (not a signature). 2 printed copies if applying via VFS.</div>
+        <a class="ref-link" href="https://ociservices.gov.in/" target="_blank" rel="noopener noreferrer">ociservices.gov.in ↗</a>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-name">India e-Visa <span class="badge photo">Photo</span></div>
+        <div class="spec"><b>Square JPEG</b>, 350–1000 px, <b>10–300 KB</b>, white/light background. Faster than OCI for a first India trip — you can do e-Visa now, OCI later.</div>
+        <a class="ref-link" href="https://indianvisaonline.gov.in/evisa/tvoa.html" target="_blank" rel="noopener noreferrer">indianvisaonline.gov.in ↗</a>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-name">Regular Indian Visa (VFS) <span class="badge photo">Photo</span></div>
+        <div class="spec">Same <b>2×2 in / 51×51 mm</b> square, digital upload <b>≤ 300 KB</b> + 2 printed copies. Only if not doing e-Visa/OCI.</div>
+        <a class="ref-link" href="https://visa.vfsglobal.com/usa/en/ind/" target="_blank" rel="noopener noreferrer">VFS Global — India visa (USA) ↗</a>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-name">Birth Certificate <span class="badge nophoto">No photo</span></div>
+        <div class="spec">Ordered from the county or state vital-records office — no photo needed.</div>
+        <a class="ref-link" href="https://www.cdc.gov/nchs/w2w/index.htm" target="_blank" rel="noopener noreferrer">Where to write for vital records ↗</a>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-name">Social Security Number <span class="badge nophoto">No photo</span></div>
+        <div class="spec">Usually auto-applied at the hospital — no photo needed.</div>
+        <a class="ref-link" href="https://www.ssa.gov/number-card/request-number-first-time" target="_blank" rel="noopener noreferrer">Request an SSN for a newborn ↗</a>
+      </div>
+
+    </div>
+  </details>
 </section>
 
 <footer>
@@ -276,8 +324,23 @@
   let img = null;
   let scale = 1, minScale = 1;   // image px -> stage css px
   let ox = 0, oy = 0;           // top-left of image in stage css coords
-  let guide = 'us';
   let cssSize = 0;
+
+  // Crown and chin are stored in IMAGE coordinates, not stage coordinates, so
+  // panning, zooming and rotating never un-mark the head the user identified.
+  let crownImg = 0, chinImg = 0;
+  let drag = null;              // 'crown' | 'chin' | 'pan'
+
+  // Official head-height rules, as fractions of the square photo.
+  //   head    = crown-to-chin height / photo height
+  //   centreY = where the head's vertical midpoint sits, measured from the top
+  // One marked head therefore yields a correct crop for BOTH rules — which is
+  // the whole point: the specs conflict, so a single shared crop cannot satisfy
+  // both, but a single shared *measurement* can.
+  const SPECS = {
+    us: { head:0.60, centreY:0.46 },   // US State Dept: head 50–69% of frame
+    in: { head:0.75, centreY:0.475 }   // OCI / Indian visa: head 70–80%
+  };
 
   function sizeCanvas(){
     cssSize = stage.clientWidth;
@@ -293,15 +356,19 @@
     im.onload = function(){
       img = im;
       document.getElementById('stageHolder').classList.add('active');
+      document.getElementById('cropSection').style.display = 'block';
       document.getElementById('dlSection').style.display = 'block';
       sizeCanvas();
       minScale = cssSize / Math.min(im.width, im.height);
       scale = minScale;
       ox = (cssSize - im.width*scale)/2;
       oy = (cssSize - im.height*scale)/2;
+      // Sensible starting guesses, converted straight into image coordinates.
+      crownImg = (0.22*cssSize - oy)/scale;
+      chinImg  = (0.72*cssSize - oy)/scale;
       const z = document.getElementById('zoom');
       z.min = 100; z.max = 400; z.value = 100;
-      draw();
+      draw(); updateFit();
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
       stage.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'center'});
       URL.revokeObjectURL(url); // image already decoded
@@ -320,53 +387,94 @@
     oy = Math.min(0, Math.max(cssSize - h, oy));
   }
 
+  // image coords -> stage css coords
+  const crownY = ()=> crownImg*scale + oy;
+  const chinY  = ()=> chinImg*scale + oy;
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    if(ctx.roundRect){ ctx.roundRect(x,y,w,h,r); return; }
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);     ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawHandle(y, label){
+    ctx.save();
+    ctx.setLineDash([7,5]); ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(232,160,32,0.98)';
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cssSize,y); ctx.stroke();
+    ctx.setLineDash([]);
+    const w = 62, h = 26, x = cssSize - w - 8;
+    ctx.fillStyle = 'rgba(199,126,0,0.97)';
+    roundRect(x, y-h/2, w, h, 13); ctx.fill();
+    ctx.fillStyle = '#FFF9EC';
+    ctx.font = '700 11px -apple-system, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + w/2, y);
+    ctx.restore();
+  }
+
   function draw(){
     if(!img) return;
     ctx.clearRect(0,0,cssSize,cssSize);
     ctx.drawImage(img, ox, oy, img.width*scale, img.height*scale);
-    // guides
-    const headTop = guide==='us' ? 0.16 : 0.10;
-    const headBot = guide==='us' ? 0.16+0.60 : 0.10+0.75;
     ctx.save();
-    ctx.strokeStyle = 'rgba(232,160,32,0.95)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([7,5]);
-    // crown & chin lines
-    [headTop, headBot].forEach(f=>{
-      ctx.beginPath();
-      ctx.moveTo(cssSize*0.08, cssSize*f);
-      ctx.lineTo(cssSize*0.92, cssSize*f);
-      ctx.stroke();
-    });
-    // center line
-    ctx.strokeStyle = 'rgba(30,42,58,0.35)';
-    ctx.beginPath();
-    ctx.moveTo(cssSize/2, cssSize*0.05);
-    ctx.lineTo(cssSize/2, cssSize*0.95);
-    ctx.stroke();
-    // face oval
-    ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(232,160,32,0.55)';
-    ctx.beginPath();
-    const cy = cssSize*(headTop+headBot)/2;
-    const ry = cssSize*(headBot-headTop)/2;
-    ctx.ellipse(cssSize/2, cy, ry*0.72, ry, 0, 0, Math.PI*2);
-    ctx.stroke();
-    // labels
-    ctx.fillStyle = 'rgba(199,126,0,1)';
-    ctx.font = '600 11px -apple-system, sans-serif';
-    ctx.fillText('crown', cssSize*0.08, cssSize*headTop - 5);
-    ctx.fillText('chin', cssSize*0.08, cssSize*headBot + 14);
+    ctx.strokeStyle = 'rgba(30,42,58,0.30)';
+    ctx.lineWidth = 1; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(cssSize/2, 0); ctx.lineTo(cssSize/2, cssSize); ctx.stroke();
     ctx.restore();
+    drawHandle(crownY(), 'crown');
+    drawHandle(chinY(),  'chin');
   }
 
-  window.setGuide = function(g){
-    guide = g;
-    const us = document.getElementById('gUS'), inn = document.getElementById('gIN');
-    us.classList.toggle('on', g==='us');  us.setAttribute('aria-pressed', g==='us');
-    inn.classList.toggle('on', g==='in'); inn.setAttribute('aria-pressed', g==='in');
-    draw();
-  };
+  // The square crop that puts the marked head at `spec`'s required size.
+  function cropRect(specKey){
+    const sp = SPECS[specKey];
+    const headH = chinImg - crownImg;
+    const S = headH / sp.head;                       // side of the output square, image px
+    return {
+      S,
+      sx: (cssSize/2 - ox)/scale - S/2,              // horizontal centre comes from the pan
+      sy: (crownImg + chinImg)/2 - sp.centreY*S
+    };
+  }
+
+  // How much of the required square falls outside the photo, as a fraction.
+  function overflowFrac(specKey){
+    const {S,sx,sy} = cropRect(specKey);
+    return Math.max(0, -sx, -sy, sx+S-img.width, sy+S-img.height) / S;
+  }
+
+  function renderCrop(specKey, px){
+    const {S,sx,sy} = cropRect(specKey);
+    const c = document.createElement('canvas');
+    c.width = px; c.height = px;
+    const cc = c.getContext('2d');
+    cc.imageSmoothingQuality = 'high';
+    cc.fillStyle = '#FFFFFF';                         // pad white if the crop runs off the photo
+    cc.fillRect(0,0,px,px);
+    cc.drawImage(img, sx, sy, S, S, 0, 0, px, px);
+    return c;
+  }
+
+  function updateFit(){
+    if(!img) return;
+    const el = document.getElementById('fitline');
+    const headFrac = (chinImg - crownImg) / img.height;
+    const worst = Math.max(overflowFrac('us'), overflowFrac('in'));
+    if(headFrac < 0.04){
+      el.className = 'fitline warn';
+      el.textContent = 'Move the two lines apart so they sit on the top of the head and the chin.';
+    } else if(worst > 0.02){
+      el.className = 'fitline warn';
+      el.textContent = 'Not enough photo around the head — zoom out or re-centre, or some files will be padded with white.';
+    } else {
+      el.className = 'fitline ok';
+      el.textContent = 'Looks good. Each file below will be cropped to its own official head size.';
+    }
+  }
 
   document.getElementById('zoom').addEventListener('input', function(){
     if(!img) return;
@@ -375,24 +483,43 @@
     scale = minScale * (this.value/100);
     ox = cx - imgX*scale;
     oy = cy0 - imgY*scale;
-    clamp(); draw();
+    clamp(); draw(); updateFit();
   });
 
   // pointer drag + pinch
   const pts = new Map();
   let lastDist = 0;
+  const SLOP = 26;                     // generous grab radius for a fingertip
+  function minGap(){ return Math.max(8, img.height*0.01); }
+
   stage.addEventListener('pointerdown', e=>{
     stage.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(pts.size === 1 && img){
+      const y = e.clientY - stage.getBoundingClientRect().top;
+      const dCrown = Math.abs(y - crownY()), dChin = Math.abs(y - chinY());
+      if(Math.min(dCrown,dChin) <= SLOP) drag = dCrown <= dChin ? 'crown' : 'chin';
+      else drag = 'pan';
+    } else {
+      drag = null;                     // a second finger means pinch, not line-drag
+    }
   });
   stage.addEventListener('pointermove', e=>{
     if(!pts.has(e.pointerId) || !img) return;
     const prev = pts.get(e.pointerId);
     const cur = {x:e.clientX, y:e.clientY};
     if(pts.size === 1){
-      ox += cur.x - prev.x;
-      oy += cur.y - prev.y;
-      clamp(); draw();
+      const dyImg = (cur.y - prev.y)/scale;
+      if(drag === 'crown'){
+        crownImg = Math.max(0, Math.min(chinImg - minGap(), crownImg + dyImg));
+      } else if(drag === 'chin'){
+        chinImg = Math.min(img.height, Math.max(crownImg + minGap(), chinImg + dyImg));
+      } else {
+        ox += cur.x - prev.x;
+        oy += cur.y - prev.y;
+        clamp();
+      }
+      draw(); updateFit();
     } else if(pts.size === 2){
       pts.set(e.pointerId, cur);
       const arr = [...pts.values()];
@@ -407,27 +534,16 @@
         scale = ns;
         ox = mx - imgX*scale; oy = my - imgY*scale;
         document.getElementById('zoom').value = Math.round(scale/minScale*100);
-        clamp(); draw();
+        clamp(); draw(); updateFit();
       }
       lastDist = d;
       return;
     }
     pts.set(e.pointerId, cur);
   });
-  function endP(e){ pts.delete(e.pointerId); lastDist = 0; }
+  function endP(e){ pts.delete(e.pointerId); lastDist = 0; if(!pts.size) drag = null; }
   stage.addEventListener('pointerup', endP);
   stage.addEventListener('pointercancel', endP);
-
-  // render the cropped square at given px, no guides
-  function renderCrop(px){
-    const c = document.createElement('canvas');
-    c.width = px; c.height = px;
-    const cc = c.getContext('2d');
-    cc.imageSmoothingQuality = 'high';
-    const sx = (0 - ox)/scale, sy = (0 - oy)/scale, sw = cssSize/scale;
-    cc.drawImage(img, sx, sy, sw, sw, 0, 0, px, px);
-    return c;
-  }
 
   function toBlobUnderKB(canvas, maxKB){
     return new Promise(resolve=>{
@@ -452,13 +568,13 @@
     setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 800);
   }
 
-  window.exportSquare = async function(name, px, maxKB, tagId){
+  window.exportSquare = async function(name, px, maxKB, tagId, spec){
     if(!img) return;
-    let c = renderCrop(px);
+    let c = renderCrop(spec, px);
     let out = await toBlobUnderKB(c, maxKB);
     // if still too big at min quality, step resolution down (OCI safety)
     if(out && out.blob.size/1024 > maxKB && px > 600){
-      c = renderCrop(600);
+      c = renderCrop(spec, 600);
       out = await toBlobUnderKB(c, maxKB);
     }
     if(!out) return;
@@ -476,7 +592,7 @@
     const sc = sheet.getContext('2d');
     sc.fillStyle = '#FFFFFF';
     sc.fillRect(0,0,W,H);
-    const crop = renderCrop(P);
+    const crop = renderCrop('us', P);
     const gapX = (W - 2*P)/3, gapY = (H - 2*P)/3; // wait: 2 rows won't fit 1200 with gaps? 2*600=1200 exactly
     // Layout: 2 cols x 2 rows exactly fills 1200 height -> use 2 cols x 2 rows tight with thin cut lines
     const positions = [
@@ -514,7 +630,7 @@
       scale = Math.max(minScale, Math.min(minScale*4, scale));
       document.getElementById('zoom').value = Math.round(scale/minScale*100);
     }
-    clamp(); draw();
+    clamp(); draw(); updateFit();
   }
   window.addEventListener('resize', handleResize);
   window.addEventListener('orientationchange', ()=>setTimeout(handleResize, 250));
